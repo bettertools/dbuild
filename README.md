@@ -10,7 +10,7 @@ import dbuild;
 
 int main(string[] args)
 {
-    exe("helloWorld")
+    dlang.exe("helloWorld")
         .source("helloWorld.d")
         ;
     return runBuild(args);
@@ -62,7 +62,7 @@ import dbuild;
 
 int main(string[] args)
 {
-    auto helloWorld = addExe("helloWorld");
+    auto helloWorld = dlang.addExe("helloWorld");
     helloWorld.addSource("helloWorld.d");
     helloWorld.addLibrary("someLibrary.lib");
     return runBuild(args);
@@ -74,7 +74,7 @@ import dbuild;
 
 int main(string[] args)
 {
-    exe("helloWorld")
+    dlang.exe("helloWorld")
         .source("helloWorld.d")
         .library("someLibrary.lib")
         ;

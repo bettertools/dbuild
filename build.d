@@ -6,7 +6,9 @@ int main(string[] args)
         .source("db.d")
         .source("dbuild/core.d")
         .source("dbuild/util.d")
-        .source("dbuild/run.d")
+        .source("dbuild/config.d")
+        .source("dbuild/compilers.d")
+        .source("dbuild/dlangcontracts.d")
         ;
     return runBuild(args);
 }

@@ -9,34 +9,26 @@ import std.format : format, formattedWrite;
 import std.array : Appender, appender;
 import std.process : spawnShell, wait;
 
-import dbuild.util : formatQuotedIfSpaces, putf, failed;
-import dbuild.core : SilentException, DbuildHiddenDir, Exe, exe, BuildMode, CommandHandlerCode;
-import dbuild.run : run, tryRun;
+import dbuild.util : SilentException, run, formatQuotedIfSpaces, putf, failed;
+import dbuild.core : DbuildHiddenDir, DbuildConfigFilename, PathSeparatorChar,
+                     CommandHandlerCode, ObjectFileExtension;
+import dbuild.config : BuildConfig;
+import dbuild.compilers : CompileMode;
+import dbuild.dlangcontracts : dlang;
 
 __gshared bool verbose = false;
 
 //
-// TODO: support all 3 D-compilers?
+// TODO: support all 3 D-compilers
+//       default to the first compiler found in PATH.  Allow
+//       user to specify which one (depending on if the project supports
+//       multiple compilers).  The selected compiler can be saved in the config.
 //       should probably default to dmd, if it isn't found then
 //       use either ldc or gdc, whichever is found first
 //       the reason for deafaulting to dmd is that speed of the build executable
 //       doesn't really matter, what we want is for it to work. some systems may
 //       only have ldc or gdc, so just use those if dmd isn't there
 //
-// TODO: I might add configuration to the .dbuild directory
-//
-
-version(Windows)
-{
-    enum pathSeparatorChar = '\\';
-    enum ObjectFileExtension = ".obj";
-}
-else
-{
-    enum pathSeparatorChar = '/';
-    enum ObjectFileExtension = ".o";
- }
-
 __gshared string[] passthroughArgs;
 // todo: add an option to override this
 __gshared string buildSource = "build.d";
@@ -44,7 +36,7 @@ __gshared bool onlyCompileBuild = false;
 
 auto createBuildExe()
 {
-    return exe("build")
+    return dlang.exe("build")
         .setOutputDir(DbuildHiddenDir)
         .setObjectDir(DbuildHiddenDir)
         ;
@@ -52,7 +44,6 @@ auto createBuildExe()
 
 int main(string[] args)
 {
-
     try { return main2(args[1..$]); }
     catch(SilentException) { return 1; }
 }
@@ -99,7 +90,7 @@ int main2(string[] args)
 void runBuildExe(string buildExeOutputFile)
 {
     auto command = appender!(char[]);
-    command.putf("%s", formatQuotedIfSpaces(format(".%s%s", pathSeparatorChar, buildExeOutputFile)));
+    command.putf("%s", formatQuotedIfSpaces(format(".%s%s", PathSeparatorChar, buildExeOutputFile)));
     foreach(passthroughArg; passthroughArgs)
     {
         // todo: handle quotes in arg
@@ -119,13 +110,15 @@ int buildBuildAndRun()
 
     // Add buildExe config to build it
     auto buildExe = createBuildExe()
-        .setBuildMode(BuildMode.debug_)
+        .setCompileMode(CompileMode.debug_)
         .includePath(installPath)
         .source(buildSource)
         .source(buildPath(dbuildPackagePath, "package.d"))
-        .source(buildPath(dbuildPackagePath, "core.d"))
         .source(buildPath(dbuildPackagePath, "util.d"))
-        .source(buildPath(dbuildPackagePath, "run.d"))
+        .source(buildPath(dbuildPackagePath, "core.d"))
+        .source(buildPath(dbuildPackagePath, "config.d"))
+        .source(buildPath(dbuildPackagePath, "compilers.d"))
+        .source(buildPath(dbuildPackagePath, "dlangcontracts.d"))
         ;
     if(buildExe.build().failed)
     {
