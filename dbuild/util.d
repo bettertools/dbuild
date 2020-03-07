@@ -133,7 +133,7 @@ inout(char)[] toExeName(inout(char)[] name)
     }
 }
 
-private struct DirAndFile
+struct DirAndFile
 {
     private string filename;
     private string dir;
